@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="bandana-1.3.1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/bandana-1.3.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/bot-1.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/commons-net-3.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dip-1.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jac-0.8.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/NegotiationServer-1.3.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/tcpIpComm-0.1.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/utilities-1.0.3.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

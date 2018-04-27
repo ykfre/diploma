@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import ddejonge.bandana.exampleAgents.MyBot;
 import ddejonge.bandana.tools.ProcessRunner;
 import ddejonge.bandana.tools.Logger;
 
@@ -19,8 +20,9 @@ public class TournamentRunner {
 	final static String[] dbraneExampleBotCommand = {"java", "-jar", "agents/D-BraneExampleBot.jar", "-log", "log", "-name", "DBraneExampleBot", "-fy", "1905"};
 
 	final static String[] anacExampleBotCommand = {"java", "-jar", "agents/AnacExampleNegotiator.jar", "-log", "log", "-name", "AnacExampleNegotiator", "-fy", "1905"};
+	final static String[] MyNegotiatorCommand= {"java", "-jar", "out/artifacts/myBot_jar/untitled1.jar", "-log", "log", "-name", "AnacExampleNegotiator", "-fy", "1920"};
+	final static String[] NotNegotiatorCommand= {"java", "-jar", "out/artifacts/NotNegotitator_jar/untitled1.jar", "-log", "log", "-name", "AnacExampleNegotiator", "-fy", "1920"};
 
-	
 	//Main folder where all the logs are stored. For each tournament a new folder will be created inside this folder
 	// where the results of the tournament will be logged.
 	final static String LOG_FOLDER = "log";
@@ -28,13 +30,13 @@ public class TournamentRunner {
 	
 	public static void main(String[] args) throws IOException {
 		
-		int numberOfGames = 3;				//The number of games this tournament consists of.
+		int numberOfGames = 10;				//The number of games this tournament consists of.
 		
 		int deadlineForMovePhases = 60; 	//60 seconds for each SPR and FAL phases
 		int deadlineForRetreatPhases = 30;  //30 seconds for each SUM and AUT phases
 		int deadlineForBuildPhases = 30;  	//30 seconds for each WIN phase
 		
-		int finalYear = 1905; 	//The year after which the agents in each game are supposed to propose a draw to each other. 
+		int finalYear = 1920; 	//The year after which the agents in each game are supposed to propose a draw to each other.
 		// (It depends on the implementation of the players whether this will indeed happen or not, so this may not always work.) 
 		
 		run(numberOfGames, deadlineForMovePhases, deadlineForRetreatPhases, deadlineForBuildPhases, finalYear);
@@ -68,9 +70,9 @@ public class TournamentRunner {
 		String tournamentLogFolderPath = LOG_FOLDER + File.separator + Logger.getDateString();
 		File logFile = new File(tournamentLogFolderPath);
 		logFile.mkdirs();
-		
-		
- 		//1. Run the Parlance game server.
+
+
+		//1. Run the Parlance game server.
 		ParlanceRunner.runParlanceServer(numberOfGames, moveTimeLimit, retreatTimeLimit, buildTimeLimit);
 		
 		//Create a list of ScoreCalculators to determine how the players should be ranked in the tournament.
@@ -87,7 +89,11 @@ public class TournamentRunner {
 		NegoServerRunner.run(tournamentObserver, tournamentLogFolderPath, numberOfGames);
 		
 		for(int gameNumber=1; gameNumber<=numberOfGames; gameNumber++){
-			
+			File file = new File(MyBot.MEMORY_MAPPED_FILE_NAME);
+			if (file.exists()){
+				file.delete();
+			}
+
 			System.out.println();
 			System.out.println("GAME " + gameNumber);
 			
@@ -100,25 +106,16 @@ public class TournamentRunner {
 				String[] command;
 				
 				//make sure that each player has a different name.
-				if(i<2){
+				if(i<3){
 					
-					name = "D-Brane " + i;
-					command = dbrane_1_1_Command; 
+					name = "NotNegotiator " + i;
+					command = NotNegotiatorCommand;
 
-				}else if(i<4){
-					
-					name = "D-BraneExampleBot " + i;
-					command = dbraneExampleBotCommand;
-					
-				}else if(i<6){
-				
-					name = "RandomNegotiator " + i;
-					command = randomNegotiatorCommand;
-					
+
 				}else{
 					
-					name = "DumbBot " + i;
-					command = dumbBot_1_4_Command;
+					name = "MyNegotiator " + i;
+					command = MyNegotiatorCommand;
 				}
 				
 				//set the log folder for this agent to be a subfolder of the tournament log folder.
@@ -181,8 +178,8 @@ public class TournamentRunner {
 		// However, you may want to do your own processing of the results, for which
 		// you can use this list.
 		ArrayList<GameResult> results = tournamentObserver.getGameResults();
-		
-		
+
+		System.in.read();
 		tournamentObserver.exit();
 		ParlanceRunner.stop();
 		NegoServerRunner.stop();

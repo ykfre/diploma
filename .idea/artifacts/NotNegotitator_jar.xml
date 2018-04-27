@@ -1,0 +1,19 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="NotNegotitator:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/NotNegotitator_jar</output-path>
+    <root id="archive" name="untitled1.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/2/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="untitled1" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/bandana-1.3.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/bot-1.6.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-net-3.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/dip-1.6.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jac-0.8.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/NegotiationServer-1.3.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/tcpIpComm-0.1.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/utilities-1.0.3.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

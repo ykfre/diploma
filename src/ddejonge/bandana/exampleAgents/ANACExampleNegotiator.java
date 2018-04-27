@@ -37,7 +37,7 @@ public class ANACExampleNegotiator extends ANACNegotiator{
 	 * -gamePort  [the port of the game server]
 	 * -negoPort  [the port of the negotiation server]
 	 *
-	 * e.g. java -jar ANACExampleNegotiator.jar -name alice -log C:\\documents\log -fy 1920 -gamePort 16713 -negoPort 16714
+	 * e.g. java -jar NotNegotiatorBot.jar -name alice -log C:\\documents\log -fy 1920 -gamePort 16713 -negoPort 16714
 	 *
  	 * All of these arguments are optional. 
  	 * 
@@ -128,7 +128,7 @@ public class ANACExampleNegotiator extends ANACNegotiator{
 					
 					DiplomacyProposal acceptedProposal = (DiplomacyProposal)receivedMessage.getContent();
 					
-					this.getLogger().logln("ANACExampleNegotiator.negotiate() Received acceptance from " + receivedMessage.getSender() + ": " + acceptedProposal, true);
+					this.getLogger().logln("NotNegotiatorBot.negotiate() Received acceptance from " + receivedMessage.getSender() + ": " + acceptedProposal, true);
 					
 					// Here we can handle any incoming acceptances.
 					// This random negotiator doesn't do anything with such messages however.
@@ -144,7 +144,7 @@ public class ANACExampleNegotiator extends ANACNegotiator{
 					
 					DiplomacyProposal receivedProposal = (DiplomacyProposal)receivedMessage.getContent();
 					
-					this.getLogger().logln("ANACExampleNegotiator.negotiate() Received proposal: " + receivedProposal, true);
+					this.getLogger().logln("NotNegotiatorBot.negotiate() Received proposal: " + receivedProposal, true);
 					
 					BasicDeal deal = (BasicDeal)receivedProposal.getProposedDeal();
 					
@@ -197,7 +197,7 @@ public class ANACExampleNegotiator extends ANACNegotiator{
 						// This agent simply flips a coin to determine whether to accept the proposal or not.
 						if(random.nextInt(2) == 0){ // accept with 50% probability.
 							this.acceptProposal(receivedProposal.getId());
-							this.getLogger().logln("ANACExampleNegotiator.negotiate()  Accepting: " + receivedProposal, true);
+							this.getLogger().logln("NotNegotiatorBot.negotiate()  Accepting: " + receivedProposal, true);
 						}
 					}
 					
@@ -209,7 +209,7 @@ public class ANACExampleNegotiator extends ANACNegotiator{
 					
 					DiplomacyProposal confirmedProposal = (DiplomacyProposal)receivedMessage.getContent();
 					
-					this.getLogger().logln("ANACExampleNegotiator.negotiate() RECEIVED CONFIRMATION OF: " + confirmedProposal, true);
+					this.getLogger().logln("NotNegotiatorBot.negotiate() RECEIVED CONFIRMATION OF: " + confirmedProposal, true);
 					
 					BasicDeal confirmedDeal = (BasicDeal)confirmedProposal.getProposedDeal();
 					
@@ -265,7 +265,7 @@ public class ANACExampleNegotiator extends ANACNegotiator{
 				
 				if(newDealToPropose != null){
 					
-					this.getLogger().logln("ANACExampleNegotiator.negotiate() Proposing: " + newDealToPropose, true);
+					this.getLogger().logln("NotNegotiatorBot.negotiate() Proposing: " + newDealToPropose, true);
 					this.proposeDeal(newDealToPropose);
 	
 				}
