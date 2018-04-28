@@ -61,7 +61,7 @@ public class MyBot extends ANACNegotiator {
     File m_f;
     MappedByteBuffer m_b;
     FileChannel m_channel;
-    public static int COALLITION_NUM = 4;
+    private int m_coalitioNum;
     DBraneTactics dBraneTactics;
 
 
@@ -76,7 +76,17 @@ public class MyBot extends ANACNegotiator {
      */
     public MyBot(String[] args) throws IOException{
         super(args);
-
+        boolean gotCoallitionNum = false;
+        for(int i = 0; i < args.length; ++i) {
+            if (args[i].equals("-CoalitionNum") && args.length > i + 1) {
+                m_coalitioNum = Integer.parseInt(args[i+1]);
+                gotCoallitionNum = true;
+            }
+        }
+        if(!gotCoallitionNum)
+        {
+            throw new IOException();
+        }
         dBraneTactics = this.getTacticalModule();
     }
 
@@ -132,7 +142,7 @@ public class MyBot extends ANACNegotiator {
             }
 
             powersNames= data.toString().split("\\r?\\n");
-            if(powersNames.length == COALLITION_NUM)
+            if(powersNames.length == m_coalitioNum)
             {
                 break;
             }

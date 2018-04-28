@@ -1,7 +1,5 @@
 package ddejonge.bandana.tournament;
 
-import ddejonge.bandana.exampleAgents.MyBot;
-
 /**
 * Created by idowe on 4/28/2018.
 */
@@ -19,14 +17,14 @@ public class AvgRankCalculator extends ScoreCalculator{
         double sum = 0;
         int coallitionNum = 0;
         if(playerName.contains("MyBot")) {
-            coallitionNum = MyBot.COALLITION_NUM;
+            coallitionNum = Globals.COALLITION_NUM;
             for (int i = 0; i < coallitionNum; i++) {
                 String prefixPlayerName = "MyBot ";
-                sum += newResult.getRank("'"+prefixPlayerName + (i + 7 - MyBot.COALLITION_NUM)+ "'");
+                sum += newResult.getRank("'"+prefixPlayerName + (i + 7 - Globals.COALLITION_NUM)+ "'");
             }
         }
         else {
-            coallitionNum = 7 - MyBot.COALLITION_NUM;
+            coallitionNum = 7 - Globals.COALLITION_NUM;
             for (int i = 0; i < coallitionNum; i++) {
                 String prefixPlayerName = "NotNegotiator ";
                 sum += newResult.getRank("'"+prefixPlayerName + i+"'");
@@ -44,15 +42,13 @@ public class AvgRankCalculator extends ScoreCalculator{
 
     @Override
     public String getScoreSystemName() {
-        return "Avg Rank";
+        return "Avg Rank For Bot Type";
     }
 
     @Override
     public String getScoreString(String playerName) {
 
-        long total = Math.round(this.getTotalScore(playerName));
-
-        return "" + total;
+        return "" + this.getTotalScore(playerName);
 
     }
 

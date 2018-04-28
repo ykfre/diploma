@@ -3,7 +3,9 @@ package ddejonge.bandana.tournament;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Vector;
 
 import ddejonge.bandana.exampleAgents.MyBot;
 import ddejonge.bandana.tools.ProcessRunner;
@@ -20,7 +22,7 @@ public class TournamentRunner {
 	final static String[] dbraneExampleBotCommand = {"java", "-jar", "agents/D-BraneExampleBot.jar", "-log", "log", "-name", "DBraneExampleBot", "-fy", "1905"};
 
 	final static String[] anacExampleBotCommand = {"java", "-jar", "agents/AnacExampleNegotiator.jar", "-log", "log", "-name", "AnacExampleNegotiator", "-fy", "1905"};
-	final static String[] MyNegotiatorCommand= {"java", "-jar", "out/artifacts/myBot_jar/untitled1.jar", "-log", "log", "-name", "MyBot", "-fy", "1920"};
+	final static String[] MyNegotiatorCommand= {"java", "-jar", "out/artifacts/myBot_jar/untitled1.jar", "-log", "log", "-name", "MyBot", "-fy", "1920", "-CoalitionNum"};
 	final static String[] NotNegotiatorCommand= {"java", "-jar", "out/artifacts/NotNegotitator_jar/untitled1.jar", "-log", "log", "-name", "NotNegotiator", "-fy", "1920"};
 
 	//Main folder where all the logs are stored. For each tournament a new folder will be created inside this folder
@@ -63,35 +65,31 @@ public class TournamentRunner {
 	static List<Process> players = new ArrayList<Process>();
 	
 	public static void run(int numberOfGames, int moveTimeLimit, int retreatTimeLimit, int buildTimeLimit, int finalYear) throws IOException{
-		
-		//Create a folder to store all the results of the tournament. 
+
+		//Create a folder to store all the results of the tournament.
 		// This folder will be placed inside the LOG_FOLDER and will have the current date and time as its name.
 		// You can change this line if you prefer it differently.
 		String tournamentLogFolderPath = LOG_FOLDER + File.separator + Logger.getDateString();
 		File logFile = new File(tournamentLogFolderPath);
 		logFile.mkdirs();
-
-
-		//1. Run the Parlance game server.
-		ParlanceRunner.runParlanceServer(numberOfGames, moveTimeLimit, retreatTimeLimit, buildTimeLimit);
-		
-		//Create a list of ScoreCalculators to determine how the players should be ranked in the tournament.
-		ArrayList<ScoreCalculator> scoreCalculators = new ArrayList<ScoreCalculator>();
+		ArrayList<ScoreCalculator> scoreCalculators = new ArrayList<>();
 		scoreCalculators.add(new SoloVictoryCalculator());
 		scoreCalculators.add(new SupplyCenterCalculator());
 		scoreCalculators.add(new PointsCalculator());
 		scoreCalculators.add(new RankCalculator());
 		scoreCalculators.add(new AvgScCalculator());
 		scoreCalculators.add(new AvgRankCalculator());
-
-		//2. Create a TournamentObserver to monitor the games and accumulate the results.
-		TournamentObserver tournamentObserver = new TournamentObserver(tournamentLogFolderPath, scoreCalculators, numberOfGames, 7);
-		
-		//3. Run the Negotiation Server.
-		NegoServerRunner.run(tournamentObserver, tournamentLogFolderPath, numberOfGames);
-		
 		for(int gameNumber=1; gameNumber<=numberOfGames; gameNumber++){
+			//1. Run the Parlance game server.
+			ParlanceRunner.runParlanceServer(100, moveTimeLimit, retreatTimeLimit, buildTimeLimit);
 
+			//Create a list of ScoreCalculators to determine how the players should be ranked in the tournament.
+
+			//2. Create a TournamentObserver to monitor the games and accumulate the results.
+			TournamentObserver tournamentObserver = new TournamentObserver(tournamentLogFolderPath, scoreCalculators, numberOfGames, 7);
+
+			//3. Run the Negotiation Server.
+			NegoServerRunner.run(tournamentObserver, tournamentLogFolderPath, numberOfGames);
 
 			System.out.println();
 			System.out.println("GAME " + gameNumber);
@@ -99,91 +97,93 @@ public class TournamentRunner {
 			if (file.exists()){
 				file.delete();
 			}
+			Globals.COALLITION_NUM = 3;
+			if(gameNumber %2 == 1)
+			{
+				Globals.COALLITION_NUM = 4;
+			}
+
 			NegoServerRunner.notifyNewGame(gameNumber);
-			
+			int playersNum = 7;
 			//4. Start the players:
-			for(int i=0; i<7; i++){
-				
+			for(int i=0; i<playersNum; i++){
+
 				String name;
-				String[] command;
-				
+				Vector<String> command;
+
 				//make sure that each player has a different name.
-				if(i<3){
-					
+				if(i<playersNum- Globals.COALLITION_NUM){
+
 					name = "NotNegotiator " + i;
-					command = NotNegotiatorCommand;
+					command = new Vector<>(Arrays.asList(NotNegotiatorCommand));
 
 
 				}else{
-					
+
 					name = "MyBot " + i;
-					command = MyNegotiatorCommand;
+					command = new Vector<>(Arrays.asList(NotNegotiatorCommand));
+					command.add(""+ Globals.COALLITION_NUM);
 				}
-				
+
 				//set the log folder for this agent to be a subfolder of the tournament log folder.
-				command[4] = tournamentLogFolderPath + File.separator + name + File.separator + "Game " + gameNumber + File.separator; 
-				
+				command.set(4, tournamentLogFolderPath + File.separator + name + File.separator + "Game " + gameNumber + File.separator);
+
 				//set the name of the agent.
-				command[6] = name; 
-				
+				command.set(6, name);
+
 				//set the year after which the agent will propose a draw to the other agents.
-				command[8] = "" + finalYear; 
-				
+				command.set(8, "" + finalYear);
+
 				//start the process
 				String processName = name;
-				Process playerProcess = ProcessRunner.exec(command, processName);
-				// We give  a name to the process so that we can see in the console where its output comes from. 
+				Process playerProcess = ProcessRunner.exec(command.toArray(new String[command.size()]), processName);
+				// We give  a name to the process so that we can see in the console where its output comes from.
 				// This name does not have to be the same as the name given to the agent, but it would be confusing
 				// to do otherwise.
-				
-				
+
+
 				//store the Process object in a list.
 				players.add(playerProcess);
-				
-				
+
+
 			}
-			
+
 			//5. Let the tournament observer (re-)connect to the game server.
 			tournamentObserver.connectToServer();
-			
-			
-			
+
+
+
 			//NOW WAIT TILL THE GAME IS FINISHED
 			while(tournamentObserver.getGameStatus() == TournamentObserver.GAME_ACTIVE || tournamentObserver.getGameStatus() == TournamentObserver.CONNECTED_WAITING_TO_START ){
-				
+
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 				}
-				
+
 				if(tournamentObserver.playerFailed()){
 					// One or more players did not send its orders in in time.
-					// 
+					//
 				}
-				
+
 			}
-			
+
 			//Kill the player processes.
 			// (if everything is implemented okay this isn't necessary because the players should kill themselves. But just to be sure..)
 			for(Process playerProces : players){
 				playerProces.destroy();
 			}
-			
-		}
-		
-		System.out.println("TOURNAMENT FINISHED");
-		
-		//Get the results of all the games played in this tournament.
-		// Each GameResult object contains the results of one game.
-		// The tournamentObserver already automatically prints these results to a text file,
-		//  as well as the processed overall results of the tournament.
-		// However, you may want to do your own processing of the results, for which
-		// you can use this list.
-		ArrayList<GameResult> results = tournamentObserver.getGameResults();
 
-		System.in.read();
-		tournamentObserver.exit();
-		ParlanceRunner.stop();
-		NegoServerRunner.stop();
+			System.out.println("Game Num is" + gameNumber);
+			if(gameNumber == numberOfGames)
+			{
+				System.out.println("TOURNAMENT FINISHED");
+				System.in.read();
+			}
+			tournamentObserver.exit();
+			ParlanceRunner.stop();
+			NegoServerRunner.stop();
+		}
+
 	}
 }

@@ -1,7 +1,6 @@
 package ddejonge.bandana.tournament;
 
-import ddejonge.bandana.exampleAgents.MyBot;
-import ddejonge.negoServer.Utils;
+import static ddejonge.bandana.tournament.Globals.COALLITION_NUM;
 
 /**
 * Created by idowe on 4/28/2018.
@@ -20,14 +19,14 @@ public class AvgScCalculator extends ScoreCalculator{
         double sum = 0;
         int coallitionNum = 0;
         if(playerName.contains("MyBot")) {
-            coallitionNum = MyBot.COALLITION_NUM;
+            coallitionNum = Globals.COALLITION_NUM;
             for (int i = 0; i < coallitionNum; i++) {
                 String prefixPlayerName = "MyBot ";
-                sum += newResult.getNumSupplyCenters("'"+prefixPlayerName + (i + 7 - MyBot.COALLITION_NUM)+ "'");
+                sum += newResult.getNumSupplyCenters("'"+prefixPlayerName + (i + 7 - Globals.COALLITION_NUM)+ "'");
             }
         }
         else {
-            coallitionNum = 7 - MyBot.COALLITION_NUM;
+            coallitionNum = 7 - Globals.COALLITION_NUM;
             for (int i = 0; i < coallitionNum; i++) {
                 String prefixPlayerName = "NotNegotiator ";
                 sum += newResult.getNumSupplyCenters("'"+prefixPlayerName + i+"'");
@@ -45,15 +44,13 @@ public class AvgScCalculator extends ScoreCalculator{
 
     @Override
     public String getScoreSystemName() {
-        return "Avg Sc";
+        return "Avg Sc For Bot Type";
     }
 
     @Override
     public String getScoreString(String playerName) {
 
-        long total = Math.round(this.getTotalScore(playerName));
-
-        return "" + total;
+        return "" + this.getTotalScore(playerName);
 
     }
 
