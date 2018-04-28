@@ -1,16 +1,15 @@
 package ddejonge.bandana.tournament;
 
 import ddejonge.bandana.exampleAgents.MyBot;
-import ddejonge.negoServer.Utils;
 
 /**
 * Created by idowe on 4/28/2018.
 */
 
-public class AvgScCalculator extends ScoreCalculator{
+public class AvgRankCalculator extends ScoreCalculator{
 
 
-    public AvgScCalculator() {
+    public AvgRankCalculator() {
         super(true);
     }
 
@@ -23,14 +22,14 @@ public class AvgScCalculator extends ScoreCalculator{
             coallitionNum = MyBot.COALLITION_NUM;
             for (int i = 0; i < coallitionNum; i++) {
                 String prefixPlayerName = "MyBot ";
-                sum += newResult.getNumSupplyCenters("'"+prefixPlayerName + (i + 7 - MyBot.COALLITION_NUM)+ "'");
+                sum += newResult.getRank("'"+prefixPlayerName + (i + 7 - MyBot.COALLITION_NUM)+ "'");
             }
         }
         else {
             coallitionNum = 7 - MyBot.COALLITION_NUM;
             for (int i = 0; i < coallitionNum; i++) {
                 String prefixPlayerName = "NotNegotiator ";
-                sum += newResult.getNumSupplyCenters("'"+prefixPlayerName + i+"'");
+                sum += newResult.getRank("'"+prefixPlayerName + i+"'");
             }
         }
         return sum/coallitionNum;
@@ -45,7 +44,7 @@ public class AvgScCalculator extends ScoreCalculator{
 
     @Override
     public String getScoreSystemName() {
-        return "Avg Sc";
+        return "Avg Rank";
     }
 
     @Override

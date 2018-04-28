@@ -20,8 +20,8 @@ public class TournamentRunner {
 	final static String[] dbraneExampleBotCommand = {"java", "-jar", "agents/D-BraneExampleBot.jar", "-log", "log", "-name", "DBraneExampleBot", "-fy", "1905"};
 
 	final static String[] anacExampleBotCommand = {"java", "-jar", "agents/AnacExampleNegotiator.jar", "-log", "log", "-name", "AnacExampleNegotiator", "-fy", "1905"};
-	final static String[] MyNegotiatorCommand= {"java", "-jar", "out/artifacts/myBot_jar/untitled1.jar", "-log", "log", "-name", "AnacExampleNegotiator", "-fy", "1920"};
-	final static String[] NotNegotiatorCommand= {"java", "-jar", "out/artifacts/NotNegotitator_jar/untitled1.jar", "-log", "log", "-name", "AnacExampleNegotiator", "-fy", "1920"};
+	final static String[] MyNegotiatorCommand= {"java", "-jar", "out/artifacts/myBot_jar/untitled1.jar", "-log", "log", "-name", "MyBot", "-fy", "1920"};
+	final static String[] NotNegotiatorCommand= {"java", "-jar", "out/artifacts/NotNegotitator_jar/untitled1.jar", "-log", "log", "-name", "NotNegotiator", "-fy", "1920"};
 
 	//Main folder where all the logs are stored. For each tournament a new folder will be created inside this folder
 	// where the results of the tournament will be logged.
@@ -30,7 +30,7 @@ public class TournamentRunner {
 	
 	public static void main(String[] args) throws IOException {
 		
-		int numberOfGames = 10;				//The number of games this tournament consists of.
+		int numberOfGames = 100;				//The number of games this tournament consists of.
 		
 		int deadlineForMovePhases = 60; 	//60 seconds for each SPR and FAL phases
 		int deadlineForRetreatPhases = 30;  //30 seconds for each SUM and AUT phases
@@ -81,7 +81,9 @@ public class TournamentRunner {
 		scoreCalculators.add(new SupplyCenterCalculator());
 		scoreCalculators.add(new PointsCalculator());
 		scoreCalculators.add(new RankCalculator());
-		
+		scoreCalculators.add(new AvgScCalculator());
+		scoreCalculators.add(new AvgRankCalculator());
+
 		//2. Create a TournamentObserver to monitor the games and accumulate the results.
 		TournamentObserver tournamentObserver = new TournamentObserver(tournamentLogFolderPath, scoreCalculators, numberOfGames, 7);
 		
@@ -89,14 +91,14 @@ public class TournamentRunner {
 		NegoServerRunner.run(tournamentObserver, tournamentLogFolderPath, numberOfGames);
 		
 		for(int gameNumber=1; gameNumber<=numberOfGames; gameNumber++){
+
+
+			System.out.println();
+			System.out.println("GAME " + gameNumber);
 			File file = new File(MyBot.MEMORY_MAPPED_FILE_NAME);
 			if (file.exists()){
 				file.delete();
 			}
-
-			System.out.println();
-			System.out.println("GAME " + gameNumber);
-			
 			NegoServerRunner.notifyNewGame(gameNumber);
 			
 			//4. Start the players:
@@ -114,7 +116,7 @@ public class TournamentRunner {
 
 				}else{
 					
-					name = "MyNegotiator " + i;
+					name = "MyBot " + i;
 					command = MyNegotiatorCommand;
 				}
 				

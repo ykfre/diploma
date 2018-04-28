@@ -24,7 +24,6 @@ import ddejonge.bandana.tools.Utilities;
 import ddejonge.negoServer.Message;
 import es.csic.iiia.fabregues.dip.board.Power;
 import es.csic.iiia.fabregues.dip.board.Province;
-import es.csic.iiia.fabregues.dip.board.Region;
 import es.csic.iiia.fabregues.dip.orders.Order;
 
 public class MyBot extends ANACNegotiator {
@@ -57,12 +56,12 @@ public class MyBot extends ANACNegotiator {
     }
 
     private Vector<Power> m_coallition = new Vector<Power>();
-    public static String MEMORY_MAPPED_FILE_NAME = "c:\\temp\\me.txt" ;
+    public static String MEMORY_MAPPED_FILE_NAME = "me.txt" ;
     public Random random = new Random();
     File m_f;
     MappedByteBuffer m_b;
     FileChannel m_channel;
-    int COALLITION_NUM = 4;
+    public static int COALLITION_NUM = 4;
     DBraneTactics dBraneTactics;
 
 
@@ -203,9 +202,12 @@ public class MyBot extends ANACNegotiator {
                 this.getLogger().logln("got exception in initialize" + e.getMessage(), true);
             }
         }
+        int numOfMessagesRecieved = 0;
+        ArrayList<Power> alliveAllies = getAlliveAllies();
+        int maxNumOfMessagesRecieved = (alliveAllies.size() - 1)*alliveAllies.size();
         //This loop repeats 2 steps. The first step is to handle any incoming messages,
         // while the second step tries to find deals to propose to the other negotiators.
-        while (System.currentTimeMillis() < negotiationDeadline) {
+        while (System.currentTimeMillis() < negotiationDeadline && numOfMessagesRecieved < maxNumOfMessagesRecieved ) {
 
 
             //STEP 1: Handle incoming messages.
@@ -214,6 +216,7 @@ public class MyBot extends ANACNegotiator {
             //See if we have received any message from any of the other negotiators.
             // e.g. a new proposal or an acceptance of a proposal made earlier.
             while (hasMessage()) {
+                numOfMessagesRecieved++;
                 //Warning: you may want to add some extra code to break out of this loop,
                 // just in case the other agents send so many proposals that your agent can't get
                 // the chance to make any proposals itself.
@@ -224,8 +227,6 @@ public class MyBot extends ANACNegotiator {
                 if (receivedMessage.getPerformative().equals(DiplomacyNegoClient.ACCEPT)) {
 
                     DiplomacyProposal acceptedProposal = (DiplomacyProposal) receivedMessage.getContent();
-
-                    this.getLogger().logln("MyBot.negotiate() Received acceptance from " + receivedMessage.getSender() + ": " + acceptedProposal, true);
 
                     // Here we can handle any incoming acceptances.
                     // This random negotiator doesn't do anything with such messages however.
@@ -240,8 +241,6 @@ public class MyBot extends ANACNegotiator {
                 } else if (receivedMessage.getPerformative().equals(DiplomacyNegoClient.PROPOSE)) {
 
                     DiplomacyProposal receivedProposal = (DiplomacyProposal) receivedMessage.getContent();
-
-                    this.getLogger().logln("MyBot.negotiate() Received proposal: " + receivedProposal, true);
 
                     BasicDeal deal = (BasicDeal) receivedProposal.getProposedDeal();
 
@@ -280,7 +279,6 @@ public class MyBot extends ANACNegotiator {
 
 
                         this.acceptProposal(receivedProposal.getId());
-                        this.getLogger().logln("MyBot.negotiate()  Accepting: " + receivedProposal, true);
                     }
 
 
@@ -291,8 +289,7 @@ public class MyBot extends ANACNegotiator {
 
                     DiplomacyProposal confirmedProposal = (DiplomacyProposal) receivedMessage.getContent();
 
-                    this.getLogger().logln("MyBot.negotiate() RECEIVED CONFIRMATION OF: " + confirmedProposal, true);
-                    
+
 
                 } else if (receivedMessage.getPerformative().equals(DiplomacyNegoClient.REJECT)) {
 
@@ -309,7 +306,6 @@ public class MyBot extends ANACNegotiator {
 
                     //We have received any other kind of message.
 
-                    this.getLogger().logln("Received a message of unhandled type: " + receivedMessage.getPerformative() + ". Message content: " + receivedMessage.getContent().toString(), true);
 
                 }
 
@@ -337,7 +333,7 @@ public class MyBot extends ANACNegotiator {
     }
 
     // This function returns all the coallition members.
-    private ArrayList<Power> getAlliveCoalitionMembers() {
+    private ArrayList<Power> getAlliveAllies() {
         ArrayList<Power> alliveAllies = new ArrayList<Power>();
         for (Power ally : m_coallition) {
             if (this.getNegotiatingPowers().contains(ally) && !ally.equals(me)) {
@@ -349,7 +345,7 @@ public class MyBot extends ANACNegotiator {
 
     private ArrayList<BasicDeal> getDealsToOffer() {
         ArrayList<BasicDeal> dealsToOffer = new ArrayList<BasicDeal>();
-        ArrayList<Power> alliveAllies = getAlliveCoalitionMembers();
+        ArrayList<Power> alliveAllies = getAlliveAllies();
 
         // make offers for all the coallition members to not attack one of the coallition.
         for (int alliveAllyIndex = 0; alliveAllyIndex < alliveAllies.size(); alliveAllyIndex++) {
