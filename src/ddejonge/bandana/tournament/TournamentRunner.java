@@ -36,7 +36,7 @@ public class TournamentRunner {
 		
 		int deadlineForMovePhases = 60; 	//60 seconds for each SPR and FAL phases
 		int deadlineForRetreatPhases = 30;  //30 seconds for each SUM and AUT phases
-		int deadlineForBuildPhases = 30;  	//30 seconds for each WIN phase
+		int deadlineForBuildPhases = 1;  	//30 seconds for each WIN phase
 		
 		int finalYear = 1920; 	//The year after which the agents in each game are supposed to propose a draw to each other.
 		// (It depends on the implementation of the players whether this will indeed happen or not, so this may not always work.) 
@@ -93,10 +93,6 @@ public class TournamentRunner {
 
 			System.out.println();
 			System.out.println("GAME " + gameNumber);
-			File file = new File(MyBot.MEMORY_MAPPED_FILE_NAME);
-			if (file.exists()){
-				file.delete();
-			}
 			Globals.COALLITION_NUM = 3;
 			if(gameNumber %2 == 1)
 			{
@@ -121,7 +117,7 @@ public class TournamentRunner {
 				}else{
 
 					name = "MyBot " + i;
-					command = new Vector<>(Arrays.asList(NotNegotiatorCommand));
+					command = new Vector<>(Arrays.asList(MyNegotiatorCommand));
 					command.add(""+ Globals.COALLITION_NUM);
 				}
 
