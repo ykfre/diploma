@@ -54,6 +54,7 @@ public class MyBot extends ANACNegotiator {
     private Vector<Power> m_coallition = new Vector<Power>();
     boolean m_isFirstTurn=true;
     DBraneTactics dBraneTactics;
+    private int m_coalitioNum;
 
     public void addToCoallition(Power power)
     {
@@ -87,6 +88,18 @@ public class MyBot extends ANACNegotiator {
     public MyBot(String[] args) throws IOException {
         super(args);
         dBraneTactics = this.getTacticalModule();
+        boolean gotCoallitionNum = false;
+       for(int i = 0; i < args.length; ++i)
+       {
+            if (args[i].equals("-CoalitionNum") && args.length > i + 1) {
+                m_coalitioNum = Integer.parseInt(args[i+1]);
+                gotCoallitionNum = true;
+            }
+       }
+       if(!gotCoallitionNum)
+       {
+           throw new IOException();
+       }
     }
     /**
      * This method is automatically called at the start of the game, after the 'game' field is set.
@@ -114,9 +127,13 @@ public class MyBot extends ANACNegotiator {
 
         this.getLogger().logln("starting negotiate ", true);
         boolean startOfThisNegotiation = true;
+        int numOfMessagesRecieved = 0;
+        ArrayList<Power> alliveAllies = getAlliveAllies();
+        int maxNumOfMessagesRecieved = (alliveAllies.size() - 1)*alliveAllies.size();
         //This loop repeats 2 steps. The first step is to handle any incoming messages,
         // while the second step tries to find deals to propose to the other negotiators.
-        while (System.currentTimeMillis() < negotiationDeadline) {
+        while (System.currentTimeMillis() < negotiationDeadline &&
+                (m_isFirstTurn ||numOfMessagesRecieved < maxNumOfMessagesRecieved)) {
 
 
             //STEP 1: Handle incoming messages.
@@ -125,6 +142,7 @@ public class MyBot extends ANACNegotiator {
             //See if we have received any message from any of the other negotiators.
             // e.g. a new proposal or an acceptance of a proposal made earlier.
             while (hasMessage()) {
+                numOfMessagesRecieved++;
                 //Warning: you may want to add some extra code to break out of this loop,
                 // just in case the other agents send so many proposals that your agent can't get
                 // the chance to make any proposals itself.
@@ -270,30 +288,55 @@ public class MyBot extends ANACNegotiator {
         List<Power> powersToConisderAllies = getAlliveAllies();
         if(m_isFirstTurn)
         {
-            powersToConisderAllies = this.game.getPowers();
-        }
-        for(Power power: powersToConisderAllies)
-        {
-            if(power ==me)
+            for(Power power: this.game.getPowers())
             {
-                continue;
+                if(power ==me)
+                {
+                    continue;
+                }
+                //This agent only generates deals for the current year and phase.
+                // However, you can pick any year and phase here, as long as they do not lie in the past.
+                // (actually, you can also propose deals for rounds in the past, but it doesn't make any sense
+                //  since you obviously cannot obey such deals).
+                ArrayList<DMZ> demilitarizedZones = new ArrayList<>();
+                ArrayList<Power> oneAllyVector = new ArrayList<>();
+                oneAllyVector.add(power);
+                demilitarizedZones.add(new DMZ(game.getYear(), game.getPhase(), oneAllyVector,
+                        me.getOwnedSCs()));
+                ArrayList<Power> meAsVector = new ArrayList<>();
+                meAsVector.add(me);
+                demilitarizedZones.add(new DMZ(game.getYear(), game.getPhase(), meAsVector,
+                        power.getOwnedSCs()));
+                List<OrderCommitment> randomOrderCommitments = new ArrayList<>();
+                BasicDeal deal = new BasicDeal(randomOrderCommitments, demilitarizedZones);
+                dealsToOffer.add(deal);
             }
-            //This agent only generates deals for the current year and phase.
-            // However, you can pick any year and phase here, as long as they do not lie in the past.
-            // (actually, you can also propose deals for rounds in the past, but it doesn't make any sense
-            //  since you obviously cannot obey such deals).
-            ArrayList<DMZ> demilitarizedZones = new ArrayList<>();
-            ArrayList<Power> oneAllyVector = new ArrayList<>();
-            oneAllyVector.add(power);
-            demilitarizedZones.add(new DMZ(game.getYear(), game.getPhase(), oneAllyVector,
-                    me.getOwnedSCs()));
-            ArrayList<Power> meAsVector = new ArrayList<>();
-            meAsVector.add(me);
-            demilitarizedZones.add(new DMZ(game.getYear(), game.getPhase(), meAsVector,
-                    power.getOwnedSCs()));
-            List<OrderCommitment> randomOrderCommitments = new ArrayList<>();
-            BasicDeal deal = new BasicDeal(randomOrderCommitments, demilitarizedZones);
-            dealsToOffer.add(deal);
+        }
+        else
+        {
+            ArrayList<Power> alliveAllies = getAlliveAllies();
+            // make offers for all the coallition members to not attack one of the coallition.
+            for (int alliveAllyIndex = 0; alliveAllyIndex < alliveAllies.size(); alliveAllyIndex++) {
+                //1. Create a list of allive alies powers
+                ArrayList<Power> relevant_powers = new ArrayList<>();
+                //1a. add myself to the list
+                relevant_powers.add(me);
+                Vector<Province> allProvinces = this.game.getProvinces();
+                for (int i = 0; i < alliveAllies.size(); i++) {
+                    // We want to make the offer to all the other coalition except the one it is relevant to.
+                    if (i == alliveAllyIndex) {
+                        continue;
+                    }
+                    relevant_powers.add(alliveAllies.get(i));
+                }
+                ArrayList<DMZ> demilitarizedZones = new ArrayList<DMZ>();
+                demilitarizedZones.add(new DMZ(game.getYear(), game.getPhase(), relevant_powers,
+                        alliveAllies.get(alliveAllyIndex).getOwnedSCs()));
+                List<OrderCommitment> randomOrderCommitments = new ArrayList<>();
+                BasicDeal deal = new BasicDeal(randomOrderCommitments, demilitarizedZones);
+                dealsToOffer.add(deal);
+            }
+
         }
         return dealsToOffer;
     }
