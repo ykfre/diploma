@@ -32,11 +32,11 @@ public class TournamentRunner {
 	
 	public static void main(String[] args) throws IOException {
 		
-		int numberOfGames = 100;				//The number of games this tournament consists of.
+		int numberOfGames = 55;				//The number of games this tournament consists of.
 		
 		int deadlineForMovePhases = 60; 	//60 seconds for each SPR and FAL phases
 		int deadlineForRetreatPhases = 30;  //30 seconds for each SUM and AUT phases
-		int deadlineForBuildPhases = 1;  	//30 seconds for each WIN phase
+		int deadlineForBuildPhases = 30;  	//30 seconds for each WIN phase
 		
 		int finalYear = 1920; 	//The year after which the agents in each game are supposed to propose a draw to each other.
 		// (It depends on the implementation of the players whether this will indeed happen or not, so this may not always work.) 

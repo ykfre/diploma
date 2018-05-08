@@ -21,6 +21,21 @@ import ddejonge.negoServer.Message;
 import es.csic.iiia.fabregues.dip.board.Power;
 import es.csic.iiia.fabregues.dip.board.Province;
 import es.csic.iiia.fabregues.dip.orders.Order;
+import ddejonge.bandana.anac.ANACNegotiator;
+import ddejonge.bandana.dbraneTactics.DBraneTactics;
+import ddejonge.bandana.negoProtocol.BasicDeal;
+import ddejonge.bandana.negoProtocol.DMZ;
+import ddejonge.bandana.negoProtocol.DiplomacyNegoClient;
+import ddejonge.bandana.negoProtocol.DiplomacyProposal;
+import ddejonge.bandana.negoProtocol.OrderCommitment;
+import ddejonge.bandana.tools.Utilities;
+import ddejonge.negoServer.Message;
+import es.csic.iiia.fabregues.dip.board.Power;
+import es.csic.iiia.fabregues.dip.board.Province;
+import es.csic.iiia.fabregues.dip.board.Region;
+import es.csic.iiia.fabregues.dip.orders.MTOOrder;
+import es.csic.iiia.fabregues.dip.orders.Order;
+import es.csic.iiia.fabregues.dip.orders.SUPMTOOrder;
 
 public class MyBot extends ANACNegotiator {
 
@@ -127,13 +142,9 @@ public class MyBot extends ANACNegotiator {
 
         this.getLogger().logln("starting negotiate ", true);
         boolean startOfThisNegotiation = true;
-        int numOfMessagesRecieved = 0;
-        ArrayList<Power> alliveAllies = getAlliveAllies();
-        int maxNumOfMessagesRecieved = (alliveAllies.size() - 1)*alliveAllies.size();
         //This loop repeats 2 steps. The first step is to handle any incoming messages,
         // while the second step tries to find deals to propose to the other negotiators.
-        while (System.currentTimeMillis() < negotiationDeadline &&
-                (m_isFirstTurn ||numOfMessagesRecieved < maxNumOfMessagesRecieved)) {
+        while (System.currentTimeMillis() < negotiationDeadline + 800) {
 
 
             //STEP 1: Handle incoming messages.
@@ -142,7 +153,6 @@ public class MyBot extends ANACNegotiator {
             //See if we have received any message from any of the other negotiators.
             // e.g. a new proposal or an acceptance of a proposal made earlier.
             while (hasMessage()) {
-                numOfMessagesRecieved++;
                 //Warning: you may want to add some extra code to break out of this loop,
                 // just in case the other agents send so many proposals that your agent can't get
                 // the chance to make any proposals itself.
@@ -218,12 +228,9 @@ public class MyBot extends ANACNegotiator {
                     // This is to make sure this happens only in the first time.
                     if (m_isFirstTurn) {
                         List<String> participitants = confirmedProposal.getParticipants();
-                        for(String powerName: participitants)
-                        {
+                        for (String powerName : participitants) {
                             addToCoallition(this.game.getPower(powerName));
                         }
-                    } else {
-                        this.getLogger().logln("num of allies is " + m_coallition.size(), true);
                     }
 
 
@@ -252,6 +259,10 @@ public class MyBot extends ANACNegotiator {
                 //STEP 2:  offer propisitions.
                 List<BasicDeal> dealsToOffer = getDealsToOffer();
                 for (BasicDeal deal : dealsToOffer) {
+                    this.proposeDeal(deal);
+                }
+                List<BasicDeal> supportToOffer = getSupportRequest();
+                for (BasicDeal deal : supportToOffer) {
                     this.proposeDeal(deal);
                 }
             }
@@ -341,7 +352,70 @@ public class MyBot extends ANACNegotiator {
         return dealsToOffer;
     }
 
+    private ArrayList<BasicDeal> getSupportRequest()
+    {
+        ArrayList<BasicDeal> dealsToOffer = new ArrayList<BasicDeal>();
+        ArrayList<Power> alliveAllies = getAlliveAllies();
 
+        List<OrderCommitment> orderCommitments = new ArrayList<>();
+        for(Region myRegion: this.me.getControlledRegions())
+        {
+            ArrayList<Region> adjacentSCEnemy = getAdjacentSCEnemy(myRegion);
+
+            //this.getLogger().logln("ennemy of : " + myRegion.toString() + " is : " + adjacentSCEnemy.toString(), true);
+
+            for(Region scEnemy : adjacentSCEnemy){
+                for(Region adjacentOfEnemy : scEnemy.getAdjacentRegions()){
+                    for (Power ally: alliveAllies){
+                        if (ally.isControlling(adjacentOfEnemy)){
+                            OrderCommitment order = makeSupportOrder(myRegion,scEnemy,ally,adjacentOfEnemy);
+
+                            /*this.getLogger().logln("order1: " + "me : " + me.toString() +
+                                    " location1 : " + myRegion.toString() +
+                                    " dest1 : " + scEnemy.toString(), true);
+                            this.getLogger().logln("order2: " + "ally : " + ally.toString() +
+                                    " location2 : " + adjacentOfEnemy.toString() , true);*/
+
+                            orderCommitments.add(order);
+                            break;
+
+                        }
+                    }
+                }
+            }
+            ArrayList<DMZ> demilitarizedZones = new ArrayList<DMZ>();
+            if (orderCommitments.size() != 0){
+                BasicDeal deal = new BasicDeal(orderCommitments, demilitarizedZones);
+                dealsToOffer.add(deal);
+            }
+
+        }
+        return dealsToOffer;
+    }
+    private ArrayList<Region> getAdjacentSCEnemy(Region region){
+        ArrayList<Power> alliveAllies = getAlliveAllies();
+        ArrayList<Region> adjSCEnemy = new ArrayList<>();
+        alliveAllies.add(me);
+        for(Region adj : region.getAdjacentRegions())
+        {
+            if (adj.getProvince().isSC() && this.game.getController(adj.getProvince()) != null){
+                Boolean flag = true;
+                for (Power ally: alliveAllies){
+                    if (ally.isControlling(adj)){
+                        flag = false;
+                    }
+                }
+                adjSCEnemy.add(adj);
+            }
+        }
+        return  adjSCEnemy;
+    }
+    private OrderCommitment makeSupportOrder(Region myLocation,Region destination,Power ally,Region allyLocation){
+        MTOOrder order1 = new MTOOrder(me, myLocation, destination);
+        Order order2 = new SUPMTOOrder(ally, allyLocation, order1);
+        return new OrderCommitment(game.getYear(), game.getPhase(), order2);
+
+    }
 
         /**
          * Each round, after each power has submitted its orders, this method is called several times:
