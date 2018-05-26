@@ -18,10 +18,10 @@ public class AvgScCalculator extends ScoreCalculator{
     public double calculateGameScore(GameResult newResult, String playerName) {
         double sum = 0;
         int coallitionNum = 0;
-        if(playerName.contains("MyBot")) {
+        if(playerName.contains("CoallitionBot")) {
             coallitionNum = Globals.COALLITION_NUM;
             for (int i = 0; i < coallitionNum; i++) {
-                String prefixPlayerName = "MyBot ";
+                String prefixPlayerName = "CoallitionBot ";
                 sum += newResult.getNumSupplyCenters("'"+prefixPlayerName + (i + 7 - Globals.COALLITION_NUM)+ "'");
             }
         }

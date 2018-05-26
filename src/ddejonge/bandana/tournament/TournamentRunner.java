@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
-import ddejonge.bandana.exampleAgents.MyBot;
 import ddejonge.bandana.tools.ProcessRunner;
 import ddejonge.bandana.tools.Logger;
 
@@ -22,7 +21,7 @@ public class TournamentRunner {
 	final static String[] dbraneExampleBotCommand = {"java", "-jar", "agents/D-BraneExampleBot.jar", "-log", "log", "-name", "DBraneExampleBot", "-fy", "1905"};
 
 	final static String[] anacExampleBotCommand = {"java", "-jar", "agents/AnacExampleNegotiator.jar", "-log", "log", "-name", "AnacExampleNegotiator", "-fy", "1905"};
-	final static String[] MyNegotiatorCommand= {"java", "-jar", "out/artifacts/myBot_jar/untitled1.jar", "-log", "log", "-name", "MyBot", "-fy", "1920", "-CoalitionNum"};
+	final static String[] MyNegotiatorCommand= {"java", "-jar", "out/artifacts/myBot_jar/untitled1.jar", "-log", "log", "-name", "CoallitionBot", "-fy", "1920", "-CoalitionNum"};
 	final static String[] NotNegotiatorCommand= {"java", "-jar", "out/artifacts/NotNegotitator_jar/untitled1.jar", "-log", "log", "-name", "NotNegotiator", "-fy", "1920"};
 
 	//Main folder where all the logs are stored. For each tournament a new folder will be created inside this folder
@@ -32,7 +31,7 @@ public class TournamentRunner {
 	
 	public static void main(String[] args) throws IOException {
 		
-		int numberOfGames = 55;				//The number of games this tournament consists of.
+		int numberOfGames = 9;				//The number of games this tournament consists of.
 		
 		int deadlineForMovePhases = 60; 	//60 seconds for each SPR and FAL phases
 		int deadlineForRetreatPhases = 30;  //30 seconds for each SUM and AUT phases
@@ -116,9 +115,8 @@ public class TournamentRunner {
 
 				}else{
 
-					name = "MyBot " + i;
+					name = "CoallitionBot " + i;
 					command = new Vector<>(Arrays.asList(MyNegotiatorCommand));
-					command.add(""+ Globals.COALLITION_NUM);
 				}
 
 				//set the log folder for this agent to be a subfolder of the tournament log folder.

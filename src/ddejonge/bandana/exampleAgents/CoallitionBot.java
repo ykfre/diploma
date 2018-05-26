@@ -1,16 +1,9 @@
 package ddejonge.bandana.exampleAgents;
 
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.CharBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.Vector;
 
 import ddejonge.bandana.anac.ANACNegotiator;
@@ -21,23 +14,8 @@ import ddejonge.negoServer.Message;
 import es.csic.iiia.fabregues.dip.board.Power;
 import es.csic.iiia.fabregues.dip.board.Province;
 import es.csic.iiia.fabregues.dip.orders.Order;
-import ddejonge.bandana.anac.ANACNegotiator;
-import ddejonge.bandana.dbraneTactics.DBraneTactics;
-import ddejonge.bandana.negoProtocol.BasicDeal;
-import ddejonge.bandana.negoProtocol.DMZ;
-import ddejonge.bandana.negoProtocol.DiplomacyNegoClient;
-import ddejonge.bandana.negoProtocol.DiplomacyProposal;
-import ddejonge.bandana.negoProtocol.OrderCommitment;
-import ddejonge.bandana.tools.Utilities;
-import ddejonge.negoServer.Message;
-import es.csic.iiia.fabregues.dip.board.Power;
-import es.csic.iiia.fabregues.dip.board.Province;
-import es.csic.iiia.fabregues.dip.board.Region;
-import es.csic.iiia.fabregues.dip.orders.MTOOrder;
-import es.csic.iiia.fabregues.dip.orders.Order;
-import es.csic.iiia.fabregues.dip.orders.SUPMTOOrder;
 
-public class MyBot extends ANACNegotiator {
+public class CoallitionBot extends ANACNegotiator {
 
 
     /**
@@ -50,7 +28,7 @@ public class MyBot extends ANACNegotiator {
      * -gamePort  [the port of the game server]
      * -negoPort  [the port of the negotiation server]
      * <p>
-     * e.g. java -jar MyBot.jar -name alice -log C:\\documents\log -fy 1920 -gamePort 16713 -negoPort 16714
+     * e.g. java -jar CoallitionBot.jar -name alice -log C:\\documents\log -fy 1920 -gamePort 16713 -negoPort 16714
      * <p>
      * All of these arguments are optional.
      * <p>
@@ -61,7 +39,7 @@ public class MyBot extends ANACNegotiator {
      */
     public static void main(String[] args) throws IOException {
 
-        MyBot myPlayer = new MyBot(args);
+        CoallitionBot myPlayer = new CoallitionBot(args);
         myPlayer.run();
 
     }
@@ -69,7 +47,6 @@ public class MyBot extends ANACNegotiator {
     private Vector<Power> m_coallition = new Vector<Power>();
     boolean m_isFirstTurn=true;
     DBraneTactics dBraneTactics;
-    private int m_coalitioNum;
 
     public void addToCoallition(Power power)
     {
@@ -83,11 +60,8 @@ public class MyBot extends ANACNegotiator {
         }
         if(!isAllyFounded)
         {
-            this.getLogger().log("ally not found " +power, true);
             m_coallition.add(power);
         }
-        this.getLogger().log("ally found " +power, true);
-
     }
 
 
@@ -100,21 +74,9 @@ public class MyBot extends ANACNegotiator {
      *
      * @param args
      */
-    public MyBot(String[] args) throws IOException {
+    public CoallitionBot(String[] args) throws IOException {
         super(args);
         dBraneTactics = this.getTacticalModule();
-        boolean gotCoallitionNum = false;
-       for(int i = 0; i < args.length; ++i)
-       {
-            if (args[i].equals("-CoalitionNum") && args.length > i + 1) {
-                m_coalitioNum = Integer.parseInt(args[i+1]);
-                gotCoallitionNum = true;
-            }
-       }
-       if(!gotCoallitionNum)
-       {
-           throw new IOException();
-       }
     }
     /**
      * This method is automatically called at the start of the game, after the 'game' field is set.
@@ -132,7 +94,6 @@ public class MyBot extends ANACNegotiator {
         // it is not necessary to call getLogger().enable() because this is already automatically done by the ANACNegotiator class.
 
         boolean printToConsole = true; //if set to true the text will be written to file, as well as printed to the standard output stream. If set to false it will only be written to file.
-        this.getLogger().logln("game is starting6676!", printToConsole);
 
     }
 
@@ -140,11 +101,11 @@ public class MyBot extends ANACNegotiator {
     @Override
     public void negotiate(long negotiationDeadline) {
 
-        this.getLogger().logln("starting negotiate ", true);
         boolean startOfThisNegotiation = true;
+        ArrayList<Power> alliveAllies = getAlliveAllies();
         //This loop repeats 2 steps. The first step is to handle any incoming messages,
         // while the second step tries to find deals to propose to the other negotiators.
-        while (System.currentTimeMillis() < negotiationDeadline + 800) {
+        while (System.currentTimeMillis() < negotiationDeadline) {
 
 
             //STEP 1: Handle incoming messages.
@@ -162,8 +123,17 @@ public class MyBot extends ANACNegotiator {
                 this.getLogger().logln("got meesage " + receivedMessage.getContent(), true);
                 if (receivedMessage.getPerformative().equals(DiplomacyNegoClient.ACCEPT)) {
                     DiplomacyProposal acceptedProposal = (DiplomacyProposal)receivedMessage.getContent();
-                    this.getLogger().logln("MyBot.negotiate() Received acceptance from " + receivedMessage.getSender() + ": " + acceptedProposal, true);
-
+                    this.getLogger().logln("CoallitionBot.negotiate() Received acceptance from " + receivedMessage.getSender() + ": " + acceptedProposal, true);
+                    // This is to make sure this happens only in the first time.
+                    if (m_isFirstTurn) {
+                        List<String> participitants = new ArrayList<>();
+                        participitants.add(receivedMessage.getSender());
+                        for(String powerName: participitants)
+                        {
+                            this.getLogger().logln(powerName, true);
+                            addToCoallition(this.game.getPower(powerName));
+                        }
+                    }
                     // Here we can handle any incoming acceptances.
                     // This random negotiator doesn't do anything with such messages however.
 
@@ -222,16 +192,9 @@ public class MyBot extends ANACNegotiator {
                     DiplomacyProposal confirmedProposal = (DiplomacyProposal) receivedMessage.getContent();
                     // The protocol manager confirms that a certain proposal has been accepted by all players involved in it.
                     // From now on we consider the deal as a binding agreement.
-                    this.getLogger().logln("MyBot.negotiate() Received confirmed from " + receivedMessage.getSender() +
+                    this.getLogger().logln("CoallitionBot.negotiate() Received confirmed from " + receivedMessage.getSender() +
                             ": " + confirmedProposal, true);
 
-                    // This is to make sure this happens only in the first time.
-                    if (m_isFirstTurn) {
-                        List<String> participitants = confirmedProposal.getParticipants();
-                        for (String powerName : participitants) {
-                            addToCoallition(this.game.getPower(powerName));
-                        }
-                    }
 
 
                 } else if (receivedMessage.getPerformative().equals(DiplomacyNegoClient.REJECT)) {
@@ -259,10 +222,6 @@ public class MyBot extends ANACNegotiator {
                 //STEP 2:  offer propisitions.
                 List<BasicDeal> dealsToOffer = getDealsToOffer();
                 for (BasicDeal deal : dealsToOffer) {
-                    this.proposeDeal(deal);
-                }
-                List<BasicDeal> supportToOffer = getSupportRequest();
-                for (BasicDeal deal : supportToOffer) {
                     this.proposeDeal(deal);
                 }
             }
@@ -294,140 +253,95 @@ public class MyBot extends ANACNegotiator {
         return alliveAllies;
     }
 
-    private ArrayList<BasicDeal> getDealsToOffer() {
+    private ArrayList<BasicDeal> getDemotrializedZonesDealsMethod1(List<Power> powersToSendTo)
+    {
         ArrayList<BasicDeal> dealsToOffer = new ArrayList<BasicDeal>();
-        List<Power> powersToConisderAllies = getAlliveAllies();
-        if(m_isFirstTurn)
-        {
-            for(Power power: this.game.getPowers())
-            {
-                if(power ==me)
-                {
+
+        ArrayList<DMZ> demilitarizedZones = new ArrayList<DMZ>();
+        for(Power power: powersToSendTo) {
+            if (power == me) {
+                continue;
+            }
+            //This agent only generates deals for the current year and phase.
+            // However, you can pick any year and phase here, as long as they do not lie in the past.
+            // (actually, you can also propose deals for rounds in the past, but it doesn't make any sense
+            //  since you obviously cannot obey such deals).
+            ArrayList<Power> oneAllyVector = new ArrayList<>();
+            oneAllyVector.add(power);
+            demilitarizedZones.add(new DMZ(game.getYear(), game.getPhase(), oneAllyVector,
+                    me.getOwnedSCs()));
+            ArrayList<Power> meAsVector = new ArrayList<>();
+            meAsVector.add(me);
+            demilitarizedZones.add(new DMZ(game.getYear(), game.getPhase(), meAsVector,
+                    power.getOwnedSCs()));
+            List<OrderCommitment> randomOrderCommitments = new ArrayList<>();
+            BasicDeal deal = new BasicDeal(randomOrderCommitments, demilitarizedZones);
+            dealsToOffer.add(deal);
+        }
+        return dealsToOffer;
+    }
+
+    private ArrayList<BasicDeal> getDemotrializedZonesDealsMethod2(ArrayList<Power> alliveAllies) {
+        ArrayList<BasicDeal> dealsToOffer = new ArrayList<BasicDeal>();
+        ArrayList<DMZ> demilitarizedZones = new ArrayList<DMZ>();
+        // make offers for all the coallition members to not attack one of the coallition.
+        for (int alliveAllyIndex = 0; alliveAllyIndex < alliveAllies.size(); alliveAllyIndex++) {
+            //1. Create a list of allive allies powers
+            ArrayList<Power> relevant_powers = new ArrayList<>();
+            //1a. add myself to the list
+            relevant_powers.add(me);
+            Vector<Province> allProvinces = this.game.getProvinces();
+            for (int i = 0; i < alliveAllies.size(); i++) {
+                // We want to make the offer to all the other coalition except the one it is relevant to.
+                if (i == alliveAllyIndex) {
                     continue;
                 }
-                //This agent only generates deals for the current year and phase.
-                // However, you can pick any year and phase here, as long as they do not lie in the past.
-                // (actually, you can also propose deals for rounds in the past, but it doesn't make any sense
-                //  since you obviously cannot obey such deals).
-                ArrayList<DMZ> demilitarizedZones = new ArrayList<>();
-                ArrayList<Power> oneAllyVector = new ArrayList<>();
-                oneAllyVector.add(power);
-                demilitarizedZones.add(new DMZ(game.getYear(), game.getPhase(), oneAllyVector,
-                        me.getOwnedSCs()));
-                ArrayList<Power> meAsVector = new ArrayList<>();
-                meAsVector.add(me);
-                demilitarizedZones.add(new DMZ(game.getYear(), game.getPhase(), meAsVector,
-                        power.getOwnedSCs()));
-                List<OrderCommitment> randomOrderCommitments = new ArrayList<>();
-                BasicDeal deal = new BasicDeal(randomOrderCommitments, demilitarizedZones);
-                dealsToOffer.add(deal);
+                relevant_powers.add(alliveAllies.get(i));
             }
+            demilitarizedZones.add(new DMZ(game.getYear(), game.getPhase(), relevant_powers,
+                    alliveAllies.get(alliveAllyIndex).getOwnedSCs()));
+            List<OrderCommitment> randomOrderCommitments = new ArrayList<>();
+            BasicDeal deal = new BasicDeal(randomOrderCommitments, demilitarizedZones);
+            dealsToOffer.add(deal);
+        }
+        return dealsToOffer;
+    }
+
+    private ArrayList<BasicDeal> getDealsToOffer() {
+        ArrayList<BasicDeal> dealsToOffer = new ArrayList<BasicDeal>();
+        if(m_isFirstTurn)
+        {
+            dealsToOffer = getDemotrializedZonesDealsMethod1(this.game.getPowers());
         }
         else
         {
             ArrayList<Power> alliveAllies = getAlliveAllies();
-            // make offers for all the coallition members to not attack one of the coallition.
-            for (int alliveAllyIndex = 0; alliveAllyIndex < alliveAllies.size(); alliveAllyIndex++) {
-                //1. Create a list of allive alies powers
-                ArrayList<Power> relevant_powers = new ArrayList<>();
-                //1a. add myself to the list
-                relevant_powers.add(me);
-                Vector<Province> allProvinces = this.game.getProvinces();
-                for (int i = 0; i < alliveAllies.size(); i++) {
-                    // We want to make the offer to all the other coalition except the one it is relevant to.
-                    if (i == alliveAllyIndex) {
-                        continue;
-                    }
-                    relevant_powers.add(alliveAllies.get(i));
-                }
-                ArrayList<DMZ> demilitarizedZones = new ArrayList<DMZ>();
-                demilitarizedZones.add(new DMZ(game.getYear(), game.getPhase(), relevant_powers,
-                        alliveAllies.get(alliveAllyIndex).getOwnedSCs()));
-                List<OrderCommitment> randomOrderCommitments = new ArrayList<>();
-                BasicDeal deal = new BasicDeal(randomOrderCommitments, demilitarizedZones);
-                dealsToOffer.add(deal);
+            this.getLogger().logln("size of coallition not including myself" + alliveAllies.size(), true);
+            if (alliveAllies.size() == 1)
+            {
+                dealsToOffer = getDemotrializedZonesDealsMethod1(alliveAllies);
             }
+            else
+            {
 
+                dealsToOffer = getDemotrializedZonesDealsMethod2(alliveAllies);
+            }
         }
         return dealsToOffer;
     }
 
-    private ArrayList<BasicDeal> getSupportRequest()
-    {
-        ArrayList<BasicDeal> dealsToOffer = new ArrayList<BasicDeal>();
-        ArrayList<Power> alliveAllies = getAlliveAllies();
 
-        List<OrderCommitment> orderCommitments = new ArrayList<>();
-        for(Region myRegion: this.me.getControlledRegions())
-        {
-            ArrayList<Region> adjacentSCEnemy = getAdjacentSCEnemy(myRegion);
 
-            //this.getLogger().logln("ennemy of : " + myRegion.toString() + " is : " + adjacentSCEnemy.toString(), true);
-
-            for(Region scEnemy : adjacentSCEnemy){
-                for(Region adjacentOfEnemy : scEnemy.getAdjacentRegions()){
-                    for (Power ally: alliveAllies){
-                        if (ally.isControlling(adjacentOfEnemy)){
-                            OrderCommitment order = makeSupportOrder(myRegion,scEnemy,ally,adjacentOfEnemy);
-
-                            /*this.getLogger().logln("order1: " + "me : " + me.toString() +
-                                    " location1 : " + myRegion.toString() +
-                                    " dest1 : " + scEnemy.toString(), true);
-                            this.getLogger().logln("order2: " + "ally : " + ally.toString() +
-                                    " location2 : " + adjacentOfEnemy.toString() , true);*/
-
-                            orderCommitments.add(order);
-                            break;
-
-                        }
-                    }
-                }
-            }
-            ArrayList<DMZ> demilitarizedZones = new ArrayList<DMZ>();
-            if (orderCommitments.size() != 0){
-                BasicDeal deal = new BasicDeal(orderCommitments, demilitarizedZones);
-                dealsToOffer.add(deal);
-            }
-
-        }
-        return dealsToOffer;
-    }
-    private ArrayList<Region> getAdjacentSCEnemy(Region region){
-        ArrayList<Power> alliveAllies = getAlliveAllies();
-        ArrayList<Region> adjSCEnemy = new ArrayList<>();
-        alliveAllies.add(me);
-        for(Region adj : region.getAdjacentRegions())
-        {
-            if (adj.getProvince().isSC() && this.game.getController(adj.getProvince()) != null){
-                Boolean flag = true;
-                for (Power ally: alliveAllies){
-                    if (ally.isControlling(adj)){
-                        flag = false;
-                    }
-                }
-                adjSCEnemy.add(adj);
-            }
-        }
-        return  adjSCEnemy;
-    }
-    private OrderCommitment makeSupportOrder(Region myLocation,Region destination,Power ally,Region allyLocation){
-        MTOOrder order1 = new MTOOrder(me, myLocation, destination);
-        Order order2 = new SUPMTOOrder(ally, allyLocation, order1);
-        return new OrderCommitment(game.getYear(), game.getPhase(), order2);
+    /**
+     * Each round, after each power has submitted its orders, this method is called several times:
+     * once for each order submitted by any other power.
+     *
+     *
+     */
+    @Override
+    public void receivedOrder(Order arg0) {
+        // TODO Auto-generated method stub
 
     }
-
-        /**
-         * Each round, after each power has submitted its orders, this method is called several times:
-         * once for each order submitted by any other power.
-         *
-         *
-         * @param orderSubmittedByOtherPlayer An order submitted by any of the other powers.
-         */
-        @Override
-        public void receivedOrder(Order arg0) {
-            // TODO Auto-generated method stub
-
-        }
 
 }
